@@ -4,14 +4,11 @@ import javafx.application.Application;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
-import java.io.OutputStream;
+import java.io.FileInputStream;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.security.MessageDigest;
 
 public class Cliente extends Application {
     public static void main(String[] args) {
@@ -28,37 +25,31 @@ public class Cliente extends Application {
                 Socket socket = new Socket("localhost", 1234);
                 System.out.println("Conexión establecida con el servidor.");
 
-                // Cifrado del archivo antes de enviarlo
-                byte[] archivoCifrado = cifrarArchivo(file);
+                FileInputStream fileInputStream = new FileInputStream(file);
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
-                OutputStream outputStream = socket.getOutputStream();
-                outputStream.write(archivoCifrado);
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+
+                // Enviar el nombre del archivo al servidor
+                dataOutputStream.writeUTF(file.getName());
+
+                // Enviar el tamaño del archivo al servidor
+                dataOutputStream.writeLong(file.length());
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                    dataOutputStream.write(buffer, 0, bytesRead);
+                }
+
                 System.out.println("Archivo enviado.");
 
-                outputStream.close();
+                bufferedInputStream.close();
+                dataOutputStream.close();
                 socket.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    // Método para cifrar el archivo utilizando AES
-    private static byte[] cifrarArchivo(File file) throws Exception {
-        byte[] fileContent = Files.readAllBytes(file.toPath());
-
-        // Genera una clave secreta para el cifrado
-        MessageDigest sha = MessageDigest.getInstance("SHA-256");
-        byte[] key = sha.digest("clave_secreta".getBytes());
-        SecretKey secretKey = new SecretKeySpec(key, "AES");
-
-        // Crea una instancia del cifrador AES
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-
-        // Cifra el archivo
-        byte[] archivoCifrado = cipher.doFinal(fileContent);
-
-        return archivoCifrado;
     }
 }
