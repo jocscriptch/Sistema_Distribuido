@@ -1,10 +1,8 @@
 package org.example;
-
 import java.io.DataInputStream;
 import java.io.FileOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class Cliente_Servidor {
@@ -13,9 +11,12 @@ public class Cliente_Servidor {
             ServerSocket serverSocket = new ServerSocket(1234);
             System.out.println("ServidorDestino iniciado. Esperando conexión...");
 
+            // Dirección IP del servidor
+            String serverIP = "192.168.0.100"; // Cambia esta dirección IP por la deseada
+
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Conexión establecida.");
+                System.out.println("Conexión establecida con el servidor IP: " + socket.getInetAddress().getHostAddress());
 
                 // Crea un nuevo hilo para manejar la solicitud del cliente
                 Runnable worker = new WorkerThread(socket);
